@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Задание 10-3</title>
+  <style>
+    .chat {
+        max-width: 500px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: 30em;
+        box-shadow: 10px 10px 10px 0 rgba(0,0,0,0.5);
+    }
+
+    .tools {
+        margin-left: 5px;
+        display: flex;
+        flex-direction: row;
+        height: 7%;
+    }
+
+    .input {
+        width: 48%;
+        border: 4px solid rgb(171, 203, 233);
+    }
+
+    .text-window{
+        border: 4px solid rgb(171, 203, 233);
+        min-height: 90%;
+        margin: 5px 5px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message-window {
+        border-radius: 8px;
+        border: 4px solid rgb(171, 203, 233);
+        align-self: flex-end;
+        display: flex;
+        justify-content: space-around;
+        margin: 10px;
+        padding: 10px;
+        font-size: larger;
+    }
+
+    .btn {
+        width: 22%;
+        display: inline-block;
+        background: rgb(171, 203, 233);
+        margin-left: 10px;
+        border: none;
+        font-weight: 550;
+    }
+  </style>
+</head>
+<body>
+    <div class="chat">
+        <div class="tools">
+            <input type="text" class="input" placeholder="Здесь вводится текст сообщения">
+            <button class="btn j-btn-message">Отправить</button>
+            <button class="btn j-btn-geo">Гео-позиция</button>
+        </div>
+        <div class="text-window"></div>
+    </div>
+  <script>
+    const wsUrl = "wss://echo-ws-service.herokuapp.com";
+    const messageInput = document.querySelector('.input');
+    const sendBtn = document.querySelector('.j-btn-message');
+    const textWindow = document.querySelector('.text-window');
+    const geoBtn = document.querySelector('.j-btn-geo');
+
+    let websocket = new WebSocket(wsUrl); 
+
+    websocket.onopen = function(e) {
+        console.log("CONNECTED");
+    };
+
+    websocket.onerror = function(e) {
+        console.log(e.data)
+    };
+
+    websocket.onmessage = function(e) {
+        console.log(e.data);
+        addMessage(e.data, 'flex-start');
+    };
+
+    sendBtn.addEventListener('click', () => {
+        let message = messageInput.value;
+        websocket.send(message);
+        addMessage(message);
+        messageInput.value = '';
+    })
+
+    function addMessage(message, position='flex-end') {
+        let messegeText = `<p class='message-window' style='align-self: ${position}'>${message}</p>`;
+        let chat = textWindow.innerHTML;
+        textWindow.innerHTML = chat + messegeText;
+    }
+
+    const error = () => {
+        let error = "Позиция не может быть определена" 
+        addMessage(error);
+    }
+
+    const success = (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        let link = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+        addLink(link)
+    }
+
+    function addLink(link) {
+        let messegeText = `<a  href='${link} 'target='_blank' style='text-decoration: none; border-radius: 8px; border: 4px solid rgb(171, 203, 233); align-self: flex-end; display: flex; justify-content: space-around; margin: 10px; padding: 10px; font-size: larger;'>Гео-позиция</a>`;
+        let chat = textWindow.innerHTML;
+        textWindow.innerHTML = chat + messegeText;
+    };
+
+    geoBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            console.log("You can't use geolocation");
+        } else {
+            navigator.geolocation.getCurrentPosition(success, error);
+        };
+    });
+  </script>
+</body>
+</html>
